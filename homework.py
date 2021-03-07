@@ -66,6 +66,8 @@ def get_homework_statuses(current_timestamp):
         # хотя с ним ошибки HTTPError попадают в .log (!)
         # homework_statuses.raise_for_status()
 
+        if 'error' in homework_statuses.json():
+            logging.error(f'{homework_statuses.json().get("error")}')
     except requests.exceptions.RequestException:
         logging.error('Exception occurred', exc_info=True)
     return homework_statuses.json()
