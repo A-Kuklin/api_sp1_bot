@@ -14,11 +14,17 @@ CHAT_ID = os.getenv('TELEGRAM_CHAT_ID')
 
 logging.basicConfig(
     level=logging.DEBUG,
-    filename='bot.log',
+    filename='homework.log',
     filemode='w',
-    datefmt='%Y-%m-%d,%H:%M:%S',
+    datefmt='%Y-%m-%d, %H:%M:%S',
     format='%(asctime)s, %(levelname)s, %(message)s, %(name)s'
 )
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+handler = logging.StreamHandler()
+handler.setFormatter(logging.Formatter('%(levelname)s, %(message)s'))
+logger.addHandler(handler)
 
 
 def parse_homework_status(homework):
@@ -26,7 +32,7 @@ def parse_homework_status(homework):
     homework_status = homework.get('status')
     verdict = 'unknown_status'
     if homework_name is None or homework_status is None:
-        logging.error('homework_name is None OR homework_status is None')
+        logger.error('homework_name is None OR homework_status is None')
         return f'{homework_name}: ' \
                f'homework_name is None OR homework_status is None'
     elif homework_status == 'reviewing':
@@ -37,7 +43,7 @@ def parse_homework_status(homework):
         verdict = 'Ревьюеру всё понравилось, ' \
                   'можно приступать к следующему уроку.'
     elif verdict == 'unknown_status':
-        logging.error('unknown review status')
+        logger.error('unknown review status')
     return f'У вас проверили работу "{homework_name}"!\n\n{verdict}'
 
 
@@ -67,9 +73,14 @@ def get_homework_statuses(current_timestamp):
         # homework_statuses.raise_for_status()
 
         if 'error' in homework_statuses.json():
-            logging.error(f'{homework_statuses.json().get("error")}')
+            logger.error(f'{homework_statuses.json().get("error")}')
+
+        """ другой пример с записью ошибки json"""
+        # except ValueError:
+        #     logger.error(f'Ошибка распаковки json: {ValueError}')
+
     except requests.exceptions.RequestException:
-        logging.error('Exception occurred', exc_info=True)
+        logger.error('Exception occurred', exc_info=True)
     return homework_statuses.json()
 
 
@@ -78,7 +89,7 @@ def send_message(message, bot_client):
 
 
 def main():
-    logging.debug('logging is started')
+    logger.debug('logging is started')
     bot_client = Bot(token=TELEGRAM_TOKEN)
     current_timestamp = int(time.time())
 
@@ -93,7 +104,7 @@ def main():
             time.sleep(300)
 
         except requests.exceptions.RequestException:
-            logging.error('Exception occurred', exc_info=True)
+            logger.error('Exception occurred', exc_info=True)
             time.sleep(5)
 
 
