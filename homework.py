@@ -59,6 +59,8 @@ def get_homework_statuses(current_timestamp):
             headers=headers,
             params=params
         )
+        if 'error' in homework_statuses.json():
+            logger.error(f'{homework_statuses.json().get("error")}')
         return homework_statuses.json()
     except ValueError:
         logger.error(f'Ошибка распаковки json: {ValueError}')
