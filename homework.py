@@ -33,22 +33,21 @@ def parse_homework_status(homework):
     verdict = 'unknown_status'
     if homework_name is None or homework_status is None:
         logger.error('homework_name is None OR homework_status is None')
-        return f'{homework_name}: ' \
-               f'homework_name is None OR homework_status is None'
+        return (f'{homework_name}: '
+                f'homework_name is None OR homework_status is None')
     elif homework_status == 'reviewing':
         verdict = 'Проект на ревью.'
     elif homework_status == 'rejected':
         verdict = 'К сожалению в работе нашлись ошибки.'
     elif homework_status == 'approved':
-        verdict = 'Ревьюеру всё понравилось, ' \
-                  'можно приступать к следующему уроку.'
+        verdict = ('Ревьюеру всё понравилось, '
+                   'можно приступать к следующему уроку.')
     elif verdict == 'unknown_status':
         logger.error('unknown review status')
     return f'У вас проверили работу "{homework_name}"!\n\n{verdict}'
 
 
 def get_homework_statuses(current_timestamp):
-    homework_statuses = {}
     if current_timestamp is None:
         current_timestamp = int(time.time())
     headers = {'Authorization': f'OAuth {PRAKTIKUM_TOKEN}'}
@@ -60,28 +59,9 @@ def get_homework_statuses(current_timestamp):
             headers=headers,
             params=params
         )
-
-        """ пример request с ошибкой 401 """
-        # homework_statuses = requests.get(URL, data={
-        #     'Authorization': PRAKTIKUM_TOKEN,
-        #     'from_date': current_timestamp
-        # })
-        # .raise_for_status() не пропускает pytest
-        # AttributeError: 'MockResponseGET' object has no attribute
-        # 'raise_for_status'
-        # хотя с ним ошибки HTTPError попадают в .log (!)
-        # homework_statuses.raise_for_status()
-
-        if 'error' in homework_statuses.json():
-            logger.error(f'{homework_statuses.json().get("error")}')
-
-        """ другой пример с записью ошибки json"""
-        # except ValueError:
-        #     logger.error(f'Ошибка распаковки json: {ValueError}')
-
-    except requests.exceptions.RequestException:
-        logger.error('Exception occurred', exc_info=True)
-    return homework_statuses.json()
+        return homework_statuses.json()
+    except ValueError:
+        logger.error(f'Ошибка распаковки json: {ValueError}')
 
 
 def send_message(message, bot_client):
@@ -99,12 +79,16 @@ def main():
             if new_homework.get('homeworks'):
                 last_hw = new_homework.get('homeworks')[0]
                 send_message((parse_homework_status(last_hw)), bot_client)
+                logger.debug('Message was sent')
             current_timestamp = new_homework.get('current_date',
                                                  current_timestamp)
             time.sleep(300)
 
         except requests.exceptions.RequestException:
             logger.error('Exception occurred', exc_info=True)
+            time.sleep(5)
+        except AttributeError:
+            logger.error('AttributeError', exc_info=True)
             time.sleep(5)
 
 
