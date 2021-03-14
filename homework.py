@@ -1,3 +1,4 @@
+import json
 import logging
 import os
 import time
@@ -59,11 +60,14 @@ def get_homework_statuses(current_timestamp):
             headers=headers,
             params=params
         )
-        if 'error' in homework_statuses.json():
-            logger.error(f'{homework_statuses.json().get("error")}')
-        return homework_statuses.json()
-    except ValueError:
-        logger.error(f'Ошибка распаковки json: {ValueError}')
+        YP_request = homework_statuses.json()
+        if 'error' in YP_request:
+            logger.error(YP_request['error'])
+        return YP_request
+    except requests.exceptions.RequestException:
+        logger.error('Exception occurred', exc_info=True)
+    except json.decoder.JSONDecodeError:
+        logger.error('JSONDecodeError occurred', exc_info=True)
 
 
 def send_message(message, bot_client):
