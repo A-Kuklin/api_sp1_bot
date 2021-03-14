@@ -49,25 +49,34 @@ def parse_homework_status(homework):
 
 
 def get_homework_statuses(current_timestamp):
+    bot_client = Bot(token=TELEGRAM_TOKEN)
     if current_timestamp is None:
         current_timestamp = int(time.time())
     headers = {'Authorization': f'OAuth {PRAKTIKUM_TOKEN}'}
     params = {'from_date': current_timestamp}
     URL = 'https://praktikum.yandex.ru/api/user_api/homework_statuses/'
+
     try:
         homework_statuses = requests.get(
             url=URL,
             headers=headers,
             params=params
         )
+    except requests.exceptions.RequestException:
+        logger.error('Request exception occurred', exc_info=True)
+        send_message('Request exception occurred', bot_client)
+        return {}
+
+    try:
         YP_request = homework_statuses.json()
         if 'error' in YP_request:
             logger.error(YP_request['error'])
+            send_message(YP_request['error'], bot_client)
         return YP_request
-    except requests.exceptions.RequestException:
-        logger.error('Exception occurred', exc_info=True)
     except json.decoder.JSONDecodeError:
         logger.error('JSONDecodeError occurred', exc_info=True)
+        send_message('JSONDecodeError occurred', bot_client)
+        return {}
 
 
 def send_message(message, bot_client):
@@ -85,16 +94,18 @@ def main():
             if new_homework.get('homeworks'):
                 last_hw = new_homework.get('homeworks')[0]
                 send_message((parse_homework_status(last_hw)), bot_client)
-                logger.debug('Message was sent')
+                logger.info('Message was sent')
             current_timestamp = new_homework.get('current_date',
                                                  current_timestamp)
             time.sleep(300)
 
         except requests.exceptions.RequestException:
             logger.error('Exception occurred', exc_info=True)
+            send_message('Exception occurred', bot_client)
             time.sleep(5)
         except AttributeError:
             logger.error('AttributeError', exc_info=True)
+            send_message('AttributeError occurred', bot_client)
             time.sleep(5)
 
 
