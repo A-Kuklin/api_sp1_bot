@@ -69,14 +69,14 @@ def get_homework_statuses(current_timestamp):
 
     try:
         YP_request = homework_statuses.json()
-        if 'error' in YP_request:
-            logger.error(YP_request['error'])
-            send_message(YP_request['error'], bot_client)
-        return YP_request
     except json.decoder.JSONDecodeError:
         logger.error('JSONDecodeError occurred', exc_info=True)
         send_message('JSONDecodeError occurred', bot_client)
         return {}
+    if 'error' in YP_request:
+        logger.error(YP_request['error'])
+        send_message(YP_request['error'], bot_client)
+    return YP_request
 
 
 def send_message(message, bot_client):
